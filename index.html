@@ -97,36 +97,7 @@
     margin: 0 auto;
   }
 
-  /* ---------- reunion strip ---------- */
-  .reunion{
-    margin: 30px auto 6px;
-    max-width: 480px;
-    text-align:center;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 999px;
-    padding: 10px 20px;
-    font-size: 0.95rem;
-    backdrop-filter: blur(6px);
-  }
-  .reunion b{ color: var(--gold); font-weight:800; }
-  .reunion button, .reunion input{
-    font-family:'Nunito Sans', sans-serif;
-    background:none;
-    border:none;
-    color: var(--coral-soft);
-    text-decoration: underline;
-    cursor:pointer;
-    font-size:0.9rem;
-  }
-  .reunion input[type="date"]{
-    color: var(--ink);
-    background: var(--sand);
-    border-radius: 8px;
-    padding: 3px 8px;
-    text-decoration:none;
-  }
-
+  
   /* ---------- the two shores ---------- */
   .shores{
     position:relative;
@@ -466,7 +437,7 @@
     <p class="subtitle">Same moon, different shores — every click is a little wave crossing the sea between us.</p>
   </header>
 
-  <div class="reunion" id="reunionStrip"></div>
+
 
   <section class="shores">
     <div class="shore left">
@@ -476,7 +447,7 @@
       </div>
       <div class="name">Aparna</div>
       <div class="role">on the far shore</div>
-      <div class="toggle" id="toggleAparna" role="button" tabindex="0">
+      <div class="toggle" id="toggleAparna" role="button" tabindex="0" style="display:none;">
         <span class="track"><span class="dot"></span></span>
         <span class="label">photo / sketch</span>
       </div>
@@ -509,7 +480,7 @@
       </div>
       <div class="name">Aswin</div>
       <div class="role">on the near shore</div>
-      <div class="toggle" id="toggleAswin" role="button" tabindex="0">
+      <div class="toggle" id="toggleAswin" role="button" tabindex="0" style="display:none;">
         <span class="track"><span class="dot"></span></span>
         <span class="label">photo / sketch</span>
       </div>
@@ -592,7 +563,7 @@
   /* ---------------- storage helpers ---------------- */
   var KEY_ASWIN = 'aswinMissesAparna';
   var KEY_APARNA = 'aparnaMissesAswin';
-  var KEY_REUNION = 'ourReunionDate';
+
   var KEY_MUTE = 'ourSoundMuted';
 
   function getNum(key){
@@ -851,47 +822,7 @@
   wireToggle('toggleAparna', 'imgAparnaPhoto', 'imgAparnaToon');
   wireToggle('toggleAswin', 'imgAswinPhoto', 'imgAswinToon');
 
-  /* ---------------- reunion date ---------------- */
-  var reunionStrip = document.getElementById('reunionStrip');
-  function daysUntil(dateStr){
-    var target = new Date(dateStr + 'T00:00:00');
-    var now = new Date();
-    now.setHours(0,0,0,0);
-    var diff = Math.round((target - now) / 86400000);
-    return diff;
-  }
-  function renderReunion(){
-    var d = localStorage.getItem(KEY_REUNION);
-    if(d){
-      var days = daysUntil(d);
-      var text;
-      if(days > 0){
-        text = '<b>' + days + '</b> day' + (days===1?'':'s') + ' until we\'re on the same shore again';
-      } else if(days === 0){
-        text = '<b>today\'s the day 🎉</b>';
-      } else {
-        text = 'You\'ve been on the same shore for ' + Math.abs(days) + ' day' + (Math.abs(days)===1?'':'s') + '. Made a new memory yet?';
-      }
-      reunionStrip.innerHTML = text + ' &nbsp;·&nbsp; <button id="editReunion">change date</button>';
-    } else {
-      reunionStrip.innerHTML = '<button id="editReunion">Set the date we\'re reunited 💫</button>';
-    }
-    document.getElementById('editReunion').addEventListener('click', openEditor);
-  }
-  function openEditor(){
-    var current = localStorage.getItem(KEY_REUNION) || '';
-    reunionStrip.innerHTML =
-      '<input type="date" id="reunionInput" value="' + current + '"> ' +
-      '<button id="saveReunion">save</button> ' +
-      '<button id="cancelReunion">cancel</button>';
-    document.getElementById('saveReunion').addEventListener('click', function(){
-      var v = document.getElementById('reunionInput').value;
-      if(v){ localStorage.setItem(KEY_REUNION, v); }
-      renderReunion();
-    });
-    document.getElementById('cancelReunion').addEventListener('click', renderReunion);
-  }
-  renderReunion();
+
 
 })();
 </script>
