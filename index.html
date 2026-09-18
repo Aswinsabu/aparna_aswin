@@ -97,6 +97,60 @@
     margin: 0 auto;
   }
 
+
+  /* ---------- secret diary ---------- */
+.diary-trigger{
+  background:none; border:none; color: var(--foam); opacity:0.6;
+  text-decoration: underline; cursor:pointer; font-size:0.75rem; font-family: inherit;
+}
+#diaryModal{
+  position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+  background: rgba(10,4,26,0.65); backdrop-filter: blur(6px); z-index:200; padding:20px;
+}
+#diaryModal.show{ display:flex; }
+.diary-card{
+  background: linear-gradient(160deg, var(--sand), #fff); color: var(--ink);
+  border-radius: 24px; padding: 30px 28px; text-align:center; max-width:420px; width:100%;
+  max-height:85vh; overflow-y:auto; box-shadow: 0 30px 80px rgba(0,0,0,0.5); animation: pop 0.4s ease;
+}
+.diary-chest{ font-size:3.2rem; margin-bottom:6px; display:inline-block; transition: transform 0.3s ease; }
+.diary-chest.shake{ animation: shake 0.4s ease; }
+@keyframes shake{
+  0%,100%{ transform: translateX(0); }
+  20%{ transform: translateX(-8px) rotate(-4deg); }
+  40%{ transform: translateX(8px) rotate(4deg); }
+  60%{ transform: translateX(-6px) rotate(-3deg); }
+  80%{ transform: translateX(6px) rotate(3deg); }
+}
+.diary-card h2{ font-family:'Fraunces', serif; margin:4px 0 6px; font-size:1.4rem; }
+.diary-card p{ margin:0 0 16px; font-size:0.9rem; opacity:0.75; }
+#diaryKeyInput{
+  width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(0,0,0,0.15);
+  font-size:1rem; text-align:center; letter-spacing:2px; font-weight:700; margin-bottom:10px; text-transform:uppercase;
+}
+.diary-card .miss-btn{ margin-top:4px; }
+#diaryError{ color:#c0392b; font-size:0.82rem; min-height:18px; margin-bottom:6px; }
+#diaryClose{
+  margin-top:14px; background:none; border:none; text-decoration:underline;
+  color: var(--ink); opacity:0.6; cursor:pointer; font-family: inherit; font-size:0.8rem;
+}
+#diaryNotes{ display:none; text-align:left; }
+#diaryNotes.show{ display:block; }
+.diary-lock-view.hide{ display:none; }
+.note-author-pick{ display:flex; gap:8px; justify-content:center; margin-bottom:10px; }
+.note-author-pick button{
+  flex:1; padding:8px; border-radius:10px; border:1px solid rgba(0,0,0,0.15);
+  background:#fff; cursor:pointer; font-family: inherit; font-weight:700; opacity:0.55;
+}
+.note-author-pick button.active{ opacity:1; background: var(--coral-soft); border-color: var(--coral); }
+#diaryTextInput{
+  width:100%; min-height:70px; padding:10px; border-radius:12px; border:1px solid rgba(0,0,0,0.15);
+  font-family: inherit; font-size:0.9rem; resize:vertical; margin-bottom:8px;
+}
+.diary-entries{ margin-top:16px; max-height:240px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+.diary-entry{ background:#fff; border-radius:12px; padding:10px 12px; border:1px solid rgba(0,0,0,0.08); font-size:0.88rem; }
+.diary-entry .meta{ font-size:0.72rem; opacity:0.55; margin-bottom:4px; font-weight:700; }
+.diary-empty{ font-size:0.85rem; opacity:0.55; text-align:center; padding:10px 0; }
   
   /* ---------- the two shores ---------- */
   .shores{
@@ -496,9 +550,10 @@
     </div>
   </section>
 
-  <footer>
+   <footer>
     Made with love, hosted on the same internet that keeps us close. ·
-    <button id="resetBtn">reset counts</button>
+    <button id="resetBtn">reset counts</button> ·
+    <button class="diary-trigger" id="diaryTrigger">our secret diary</button>
   </footer>
 </main>
 
@@ -509,7 +564,33 @@
     <button id="milestoneClose">back to us</button>
   </div>
 </div>
+  
+<div id="diaryModal">
+  <div class="diary-card">
+    <div class="diary-lock-view" id="diaryLockView">
+      <div class="diary-chest" id="diaryChest">🔒</div>
+      <h2>A little treasure, just for us</h2>
+      <p>Only the two of us know the key.</p>
+      <input type="password" id="diaryKeyInput" placeholder="key" autocomplete="off">
+      <div id="diaryError">&nbsp;</div>
+      <button class="miss-btn" id="diaryUnlockBtn" style="width:100%; justify-content:center;">Unlock</button>
+    </div>
 
+    <div id="diaryNotes">
+      <h2 style="text-align:center;">Our Secret Diary 💛</h2>
+      <p style="text-align:center;">Just us. Write whatever you want the other to find.</p>
+      <div class="note-author-pick">
+        <button id="pickAswin" type="button">Aswin</button>
+        <button id="pickAparna" type="button">Aparna</button>
+      </div>
+      <textarea id="diaryTextInput" placeholder="Write a little something..."></textarea>
+      <button class="miss-btn" id="diaryAddBtn" style="width:100%; justify-content:center;">Add to the diary</button>
+      <div class="diary-entries" id="diaryEntries"></div>
+    </div>
+
+    <button id="diaryClose">close</button>
+  </div>
+</div>
 <script>
 (function(){
   "use strict";
@@ -825,6 +906,120 @@
 
 
 })();
+    /* ---------------- secret diary ---------------- */
+  var DIARY_KEY = '26JAN';
+  var diaryUnlocked = false;
+  var diaryAuthor = null;
+  var diaryListenerAttached = false;
+  var localDiaryEntries = [];
+
+  var diaryModal = document.getElementById('diaryModal');
+  var diaryTrigger = document.getElementById('diaryTrigger');
+  var diaryLockView = document.getElementById('diaryLockView');
+  var diaryNotes = document.getElementById('diaryNotes');
+  var diaryChest = document.getElementById('diaryChest');
+  var diaryKeyInput = document.getElementById('diaryKeyInput');
+  var diaryError = document.getElementById('diaryError');
+  var diaryUnlockBtn = document.getElementById('diaryUnlockBtn');
+  var diaryClose = document.getElementById('diaryClose');
+  var diaryEntriesEl = document.getElementById('diaryEntries');
+  var diaryTextInput = document.getElementById('diaryTextInput');
+  var diaryAddBtn = document.getElementById('diaryAddBtn');
+  var pickAswinBtn = document.getElementById('pickAswin');
+  var pickAparnaBtn = document.getElementById('pickAparna');
+
+  function openDiary(){
+    diaryModal.classList.add('show');
+    if(diaryUnlocked){ showDiaryNotes(); }
+    else{
+      diaryLockView.classList.remove('hide');
+      diaryNotes.classList.remove('show');
+      diaryKeyInput.value = '';
+      diaryError.innerHTML = '&nbsp;';
+      setTimeout(function(){ diaryKeyInput.focus(); }, 100);
+    }
+  }
+  function closeDiary(){ diaryModal.classList.remove('show'); }
+
+  function showDiaryNotes(){
+    diaryLockView.classList.add('hide');
+    diaryNotes.classList.add('show');
+    attachDiaryListener();
+  }
+
+  function tryUnlock(){
+    var val = (diaryKeyInput.value || '').trim().toUpperCase();
+    if(val === DIARY_KEY){
+      diaryUnlocked = true;
+      diaryChest.textContent = '🔓';
+      diaryError.innerHTML = '&nbsp;';
+      setTimeout(showDiaryNotes, 350);
+    } else {
+      diaryError.textContent = "That's not quite the key. Try again.";
+      diaryChest.classList.remove('shake');
+      void diaryChest.offsetWidth;
+      diaryChest.classList.add('shake');
+    }
+  }
+
+  diaryTrigger.addEventListener('click', openDiary);
+  diaryClose.addEventListener('click', closeDiary);
+  diaryUnlockBtn.addEventListener('click', tryUnlock);
+  diaryKeyInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); tryUnlock(); }
+  });
+
+  function setAuthor(name){
+    diaryAuthor = name;
+    pickAswinBtn.classList.toggle('active', name === 'Aswin');
+    pickAparnaBtn.classList.toggle('active', name === 'Aparna');
+  }
+  pickAswinBtn.addEventListener('click', function(){ setAuthor('Aswin'); });
+  pickAparnaBtn.addEventListener('click', function(){ setAuthor('Aparna'); });
+  setAuthor('Aswin');
+
+  function renderDiaryEntries(entries){
+    if(!entries || !entries.length){
+      diaryEntriesEl.innerHTML = '<div class="diary-empty">No notes yet — be the first to write one.</div>';
+      return;
+    }
+    var sorted = entries.slice().sort(function(a,b){ return (b.time||0) - (a.time||0); });
+    diaryEntriesEl.innerHTML = sorted.map(function(entry){
+      var when = entry.time ? new Date(entry.time).toLocaleString() : '';
+      var safeText = (entry.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return '<div class="diary-entry"><div class="meta">' + (entry.author || 'Someone') + ' · ' + when + '</div>' + safeText + '</div>';
+    }).join('');
+  }
+
+  function attachDiaryListener(){
+    if(diaryListenerAttached) return;
+    diaryListenerAttached = true;
+    if(cloudReady){
+      db.ref('diary/entries').on('value', function(snap){
+        var val = snap.val() || {};
+        localDiaryEntries = Object.keys(val).map(function(k){ var e = val[k]; e._key = k; return e; });
+        renderDiaryEntries(localDiaryEntries);
+      });
+    } else {
+      try{ localDiaryEntries = JSON.parse(localStorage.getItem('ourDiaryEntries') || '[]'); }
+      catch(e){ localDiaryEntries = []; }
+      renderDiaryEntries(localDiaryEntries);
+    }
+  }
+
+  diaryAddBtn.addEventListener('click', function(){
+    var text = (diaryTextInput.value || '').trim();
+    if(!text) return;
+    var entry = { author: diaryAuthor, text: text, time: Date.now() };
+    if(cloudReady){
+      db.ref('diary/entries').push(entry);
+    } else {
+      localDiaryEntries.push(entry);
+      localStorage.setItem('ourDiaryEntries', JSON.stringify(localDiaryEntries));
+      renderDiaryEntries(localDiaryEntries);
+    }
+    diaryTextInput.value = '';
+  });
 </script>
 </body>
 </html>
